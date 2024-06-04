@@ -34,8 +34,6 @@ spec:
               value: DC=TESTMYLDAP,DC=COM
             - name: LDAP_SEARCH_FILTER
               value: (sAMAccountName={username})
-            - name: LDAP_HTTPS_SUPPORT
-              value: enabled
             - name: LOG_LEVEL
               values: INFO
             - name: LDAP_MANAGER_PASSWORD
