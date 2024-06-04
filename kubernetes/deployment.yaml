@@ -25,21 +25,21 @@ spec:
               containerPort: 9000
           env:
             - name: LDAP_ENDPOINT
-              value: "ldaps://testmyldap.com:636"
+              value: ldaps://testmyldap.com:636
             - name: LDAP_MANAGER_DN_USERNAME
-              value: "CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM"
+              value: CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM
             - name: LDAP_SERVER_DOMAIN
-              value: "TESTMYLDAP"
+              value: TESTMYLDAP
             - name: LDAP_SEARCH_BASE
-              value: "DC=TESTMYLDAP,DC=COM"
+              value: DC=TESTMYLDAP,DC=COM
             - name: LDAP_SEARCH_FILTER
-              value: "(sAMAccountName={username})"
+              value: (sAMAccountName={username})
             - name: LDAP_HTTPS_SUPPORT
-              value: "enabled"
+              value: enabled
             - name: LOG_FORMAT
-              value: "JSON"
+              value: JSON
             - name: LOG_LEVEL
-              values: "INFO"
+              values: INFO
             - name: LDAP_MANAGER_PASSWORD
               valueFrom:
                 secretKeyRef:
