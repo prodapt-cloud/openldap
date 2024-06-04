@@ -37,7 +37,7 @@ spec:
             - name: LDAP_HTTPS_SUPPORT
               value: enabled
             - name: LOG_FORMAT
-              value: JSON
+              value: YAML
             - name: LOG_LEVEL
               values: INFO
             - name: LDAP_MANAGER_PASSWORD
