@@ -1,32 +1,79 @@
-FROM python:3.9.9-alpine3.14
+#Create OpenLDAP image and configure using config.ini
 
-ENV LDAP_ENDPOINT=""
-ENV LDAP_MANAGER_DN_USERNAME=""
-ENV LDAP_MANAGER_PASSWORD=""
-ENV LDAP_SEARCH_BASE=""
-ENV LDAP_SEARCH_FILTER=""
-ENV FLASK_SECRET_KEY="CHANGE_ME!"
+#create LDIF and configuration
+FROM docker.io/python:3.10-alpine3.16 as build
 
-ENV PYTHONUNBUFFERED=0
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+WORKDIR /config
+#create environment and LDIF file from ini-file
+COPY scripts/configureOpenLDAP.py .
+COPY scripts/names.ini .
+COPY config.ini .
+RUN python configureOpenLDAP.py
+#RUN cat generated.ldif
 
-RUN apk --no-cache add build-base openldap-dev libffi-dev
-COPY files/requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt --no-cache-dir
+#create certificate for OpenLDAP based on domain in config.ini
+FROM kazhar/certificate-authority as certbuild
 
-# Run as non-root
-ENV USER aldap
-ENV UID 10001
-ENV GROUP aldap
-ENV GID 10001
-ENV HOME /home/$USER
-RUN addgroup -g $GID -S $GROUP && adduser -u $UID -S $USER -G $GROUP
+#add custom SANs to certificate
+#when building image use --build-arg SANS="san1 san2"
+ARG SANS=""
+ARG IP_SANS=""
 
-# Python code
-COPY files/* $HOME/
-RUN chown -R $USER:$GROUP $HOME
+COPY --from=build /config/generated*.txt ./
 
-EXPOSE 9000
-USER $UID:$GID
-WORKDIR $HOME
-CMD ["python3", "-u", "main.py"]
+#generate certificate
+RUN DOMAIN=$(cat generated_domain.txt) && \
+    ORGANIZATION="$(cat generated_org.txt)" && \
+    sh create-certificate.sh -c "$ORGANIZATION" -I "127.0.0.1 ${IP_SANS}" -f ldap openldap.$DOMAIN localhost $SANS
+
+WORKDIR /certs
+RUN mv /ca/certificate/ca.crt /ca/ldap.crt /ca/ldap.key .
+
+#OpenLDAP container
+#based on bitnami image https://hub.docker.com/r/bitnami/openldap
+FROM docker.io/bitnami/openldap:latest
+
+#default port numbers
+#ENV LDAP_PORT_NUMBER=1389
+#ENV LDAP_LDAPS_PORT_NUMBER=1636
+
+#copy OpenLDAP config LDIF
+COPY config/overlays.ldif /schemas/
+#copy certs
+COPY --from=certbuild /certs/* /certs/
+
+#change chmods
+USER root
+RUN chmod 644 /certs/* && chmod -R 755 /schemas/
+USER 1001
+
+#copy config.ini file
+COPY --from=build /config/config.ini /
+#copy settings file
+COPY --from=build /config/settings.txt /
+#copy admin password file
+COPY --from=build /config/adminpassword.txt /etc/
+#copy LDIF file
+COPY --from=build /config/generated.ldif /ldifs/
+#copy env file
+COPY --from=build /config/generated.env /tmp/
+
+#configure libopenldap.sh script to include generate environment variables
+#TODO: modify source libopenldap.sh so that it reads environment variables from file 
+#before setting the environment
+USER root
+WORKDIR /opt/bitnami/scripts/
+RUN csplit --suppress-matched libopenldap.sh '/ldap_env()/' '{*}' && \
+    cat xx00 > new.sh && \
+    cat /tmp/generated.env >> new.sh && \
+    echo "ldap_env() {" >> new.sh && \
+    cat xx01 >> new.sh && \
+    cp libopenldap.sh libopenldap.sh.original && \
+    cp new.sh libopenldap.sh 
+#    && \
+#    cat libopenldap.sh
+WORKDIR /
+USER 1001
+
+#print settings
+RUN cat /settings.txt

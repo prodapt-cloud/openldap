@@ -43,23 +43,22 @@ jobs:
         LATEST_TAG: latest
         IMAGE_TAG: ${{ github.sha }}
       run: |
-          docker tag  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap:$IMAGE_TAG  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap:latest
-          docker push  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap:latest
+          docker tag  730335644419.dkr.ecr.us-east-1.amazonaws.com/open-ldap:$IMAGE_TAG  730335644419.dkr.ecr.us-east-1.amazonaws.com/open-ldap:latest
+          docker push  730335644419.dkr.ecr.us-east-1.amazonaws.com/open-ldap:latest
 
     - name: Login to AWS
       id : aws-login
       run: |
            aws eks update-kubeconfig --region us-east-1 --name TMF-INFRA-EKS
 
-    - name: Create Namespace
-      id: create-ns
-      run: |
-         myNamespace="ingress-nginx"
-         kubectl get namespace | grep -q "^$myNamespace " || kubectl create namespace $myNamespace
+    # - name: Create Namespace
+    #   id: create-ns
+    #   run: |
+    #      myNamespace="ingress-nginx"
+    #      kubectl get namespace | grep -q "^$myNamespace " || kubectl create namespace $myNamespace
 
     - name: Deploy the manifest files
       id: deploy-app
       run: |
            kubectl apply -f kubernetes/deployment.yaml
-           kubectl apply -f kubernetes/secret.yaml
            kubectl apply -f kubernetes/service.yaml

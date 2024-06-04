@@ -1,3 +1,4 @@
-files/__pycache__
-export.sh
-.vscode
+generated*
+Dockerfile.generated
+tmp/
+TODO*

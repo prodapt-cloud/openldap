@@ -1,185 +1,290 @@
-⚠️ New version of Another LDAP via form-based here https://github.com/dignajar/another-ldap
+= OpenLDAP demo container
+:toc: left
+:toc-title: Table of Contents
 
-# Another LDAP authentication
+OpenLDAP Docker container for demo purposes.
 
-**LDAP Authentication** for **Nginx**, **Nginx ingress controller** (Kubernetes), **HAProxy** ([haproxy-auth-request](https://github.com/TimWolla/haproxy-auth-request)) or any webserver/reverse proxy with authorization based on the result of a subrequest.
+Based on https://hub.docker.com/r/bitnami/openldap/[Bitnami Docker Image for OpenLDAP].
 
-**Another LDAP Authentication** is an implementation of the `ldap-auth-daemon` services described in the official blog from Nginx in the [following article](https://www.nginx.com/blog/nginx-plus-authenticate-users/).
+== Use case
 
-**Another LDAP Authentication** it's prepared to run inside a Docker container, also you can run the Python script without the Docker container.
+Occasionally I have a need to have LDAP server with groups and users. That's why this image exists. No installations, no setup, just run and use.
 
-[![Docker Hub](https://img.shields.io/badge/Docker-Hub-blue.svg)](https://hub.docker.com/r/dignajar/another-ldap-auth)
-[![Kubernetes YAML manifests](https://img.shields.io/badge/Kubernetes-manifests-blue.svg)](https://github.com/dignajar/another-ldap-auth/tree/master/kubernetes)
-[![codebeat badge](https://codebeat.co/badges/1d7cc634-4af0-4f26-b910-99fc98c61d11)](https://codebeat.co/projects/github-com-dignajar-another-ldap-auth-master)
-[![release](https://img.shields.io/github/v/release/dignajar/another-ldap-auth.svg)](https://github.com/dignajar/another-ldap-auth/releases)
-[![license](https://img.shields.io/badge/license-MIT-green)](https://github.com/dignajar/another-ldap-auth/blob/master/LICENSE)
+== Usage
 
-## Features
-- Supports `ldap` and `ldaps`.
-- Provide a cache for users and groups, you can set the cache expiration in minutes.
-- Supports validation by groups, regex in groups are supported.
-- Supports TLS via self-signed certificate.
-- Supports configuration via headers or via environment variables.
-- Supports HTTP response headers such as username and matched groups.
-- Brute force protection.
-- Log format in Plain-Text or JSON.
+* Get Docker image:
+```
+docker pull kazhar/openldap-demo
+```
+* Run Docker image: 
+```
+docker run -d -p 389:1389 -p 636:1636 --name openldap-demo kazhar/openldap-demo
+```
+* Login to server:
+** Base DN: `dc=sirius,dc=com`
+** Admin user: `cn=admin,dc=sirius,dc=com`
+** Password: `passw0rd`
 
-## Diagram
-![Another LDAP Authentication](https://i.ibb.co/crJ0Xr2/diagram-1.png)
+Or you can download/clone this repo and create and build your own OpenLDAP image.
 
-## Available configurations parameters
-The parameters can be sent via environment variables or via HTTP headers, also you can combine them.
+== LDAP connection and filters
 
-The parameter `LDAP_SEARCH_FILTER` support variable expansion with the username, you can do something like this `(sAMAccountName={username})` and `{username}` is going to be replaced by the username typed in the login form.
+Some applications ask for LDAP connection and filters. If using the default OpenLDAP demo image, here are the settings and filters that should work.
 
-The parameter `LDAP_BIND_DN` support variable expansion with the username, you can do something like this `{username}@TESTMYLDAP.com` or `UID={username},OU=PEOPLE,DC=TESTMYLDAP,DC=COM` and `{username}` is going to be replaced by the username typed in the login form.
+|===
+|Setting |Value
 
-All values type are `string`.
+|URL
+|`ldap://server.ip:389`
 
-### Environment variables
-| Key                                   | Default   | Values                           | Description                                                                            | Example                                                        |
-| ------------------------------------- | --------- | ---------------------------------| ---------------------------------------------------------------------------------------| ---------------------------------------------------------------|
-| LDAP_ENDPOINT                         |           |                                  | LDAP URL with the protocol and the port number.                                        | `ldaps://testmyldap.com:636`                                   |
-| LDAP_MANAGER_DN_USERNAME              |           |                                  | Username to bind and search in the LDAP tree.                                          | `CN=john,OU=Administrators,DC=TESTMYLDAP,DC=COM`               |
-| LDAP_MANAGER_PASSWORD                 |           |                                  | Password for the bind user.                                                            |                                                                |
-| LDAP_SEARCH_BASE                      |           |                                  |                                                                                        | `DC=TESTMYLDAP,DC=COM`                                         |
-| LDAP_SEARCH_FILTER                    |           |                                  | Filter for search, for Microsoft Active Directory usually you can use `sAMAccountName`.| `(sAMAccountName={username})`                                  |
-| LDAP_BIND_DN                          | `{username}` |                                  | Depends on your LDAP server the binding structure can change. This field support variable expansion for the username.     | `{username}@TESTMYLDAP.com` or `UID={username},OU=PEOPLE,DC=TESTMYLDAP,DC=COM` |
-| LDAP_ALLOWED_USERS **(Optional)**     |            |                                  | Support a list separated by commas.| `'diego,john,s-master'` |
-| LDAP_ALLOWED_GROUPS **(Optional)**    |           |                                  | Supports regular expressions, and support a list separated by commas.| `'DevOps production environment', 'Developers .* environment'` |
-| LDAP_ALLOWED_GROUPS_CONDITIONAL       | `and`     | `and`, `or`                      | Conditional to match all the groups in the list or just one of them.                   | `or`                                                           |
-| LDAP_ALLOWED_GROUPS_CASE_SENSITIVE    | `enabled` | `enabled`, `disabled`            | Enabled or disabled case sensitive groups matches.                                     | `disabled`                                                     |
-| LDAP_ALLOWED_GROUPS_USERS_CONDITIONAL | `or`      | `and`, `or`                      | Conditional to match user and at least one group in the list, or one of the two        | `and`                                                          |
-| CACHE_EXPIRATION                      | `5`       |                                  | Cache expiration time in minutes.                                                      | `10`                                                           |
-| LOG_LEVEL                             | `INFO`    | `INFO`, `WARNING`, `ERROR`       | Logger level.                                                                          | `DEBUG`                                                        |
-| LOG_FORMAT                            | `TEXT`    | `TEXT`, `JSON`                   | Output format of the logger.                                                           | `JSON`                                                         |
-| LDAP_HTTPS_SUPPORT                    | `disabled`| `enabled`, `disabled`            | Enabled or disabled HTTPS support with self signed certificate.                        |                                                                |
-| BRUTE_FORCE_PROTECTION                | `disabled`| `enabled`, `disabled`            | Enabled or disabled Brute force protection per IP. | |
-| BRUTE_FORCE_EXPIRATION                | `10`|                                         | Brute force expiration time in seconds per IP. | |
-| BRUTE_FORCE_FAILURES                  | `3`|                                         | Number of failures before the IP is blocked.  | |
+|Base DN
+|`dc=sirius,dc=com`
 
-### HTTP request headers
-The variables send via HTTP headers take precedence over environment variables.
+|Bind DN, admin or domain search user
+|`cn=admin,dc=sirius,dc=com`
 
-- `Ldap-Endpoint`
-- `Ldap-Manager-Dn-Username`
-- `Ldap-Manager-Password`
-- `Ldap-Bind-DN`
-- `Ldap-Search-Base`
-- `Ldap-Search-Filter`
-- `Ldap-Allowed-Users`
-- `Ldap-Allowed-Groups`
-- `Ldap-Allowed-Groups-Case-Sensitive`
-- `Ldap-Allowed-Groups-Conditional`
+|Admin password
+|`passw0rd`
 
-### HTTP response headers
-- `x-username` Contains the authenticated username
-- `x-groups` Contains the username matches groups
+|User filter
+|`(&(uid=%v)(objectclass=inetOrgPerson))`
 
-## Installation and configuration
-The easy way to use **Another LDAP Authentication** is running as a Docker container and set the parameters via environment variables.
+|Group filter
+|`(&(cn=%v)(objectclass=groupOfUniqueNames))`
 
-### Step 1 - Run as a Docker container
-Change the environment variables with your setup.
+|Group membership search filter
+|`(&(uniqueMember={0})(objectclass=groupOfUniqueNames))`
+
+|Group member ID map 
+|`groupOfUniqueNames:uniqueMember`
+
+|User ID map
+|`*:uid`
+
+|Group ID map
+|`*:cn`
+
+|User search base
+|`ou=users,dc=sirius,dc=com`
+
+|User search field
+|`uid`
+
+|Group search base
+|`ou=groups,dc=sirius,dc=com`
+
+|Group search field
+|`cn`
+
+|First name
+|`givenName`
+
+|Last name
+|`sn`
+
+|Email
+|`mail`
+
+|Group membership (within inetorgPerson)
+|`memberOf`
+
+|Group member field (within groupOfUniqueNames)
+|`uniqueMember`
+
+
+|===
+
+== Groups and users
+
+Groups and users are specified in link:config.ini[config.ini]-file. When building container, LDIF file is generated (much like link:sample.ldif[sample.ldif]).
+
+One group is:
+
+- `cn=admin,ou=groups,dc=sirius,dc=com`
+
+And one user in that group is :
+
+- `uid=kdoyle,ou=users,dc=sirius,dc=com`
+
+The default password for users is `passw0rd`. Another password can be set in link:config.ini[config.ini].
+
+See the generated LDIF or use a LDAP admin tool to get more information about the user entries.
+
+=== Default users and groups
+
+==== Group: admin
+
+|===
+|Name |UID |Default password
+
+|Kiara Doyle
+|`kdoyle`
+|`passw0rd`
+
+|Zac Fraser
+|`zfraser`
+|`passw0rd`
+
+|Andre Shaw
+|`ashaw`
+|`passw0rd`
+
+|Daniella Wells
+|`dwells`
+|`passw0rd`
+
+|===
+
+==== Group: research
+
+|===
+|Name|UID |Default password
+
+|Olivia Berry
+|`oberry`
+|`passw0rd`
+
+|Oscar Davis
+|`odavis`
+|`passw0rd`
+
+|Amelia Lawson
+|`alawson`
+|`passw0rd`
+
+|Jonah Stone
+|`jstone`
+|`passw0rd`
+
+|===
+
+==== Group: operations
+
+|===
+|Name|UID |Default password
+
+|Tom Foster
+|`tfoster`
+|`passw0rd`
+
+|Cara Hawkins
+|`chawkins`
+|`passw0rd`
+
+|Natalia Matthews
+|`nmatthews`
+|`passw0rd`
+
+|George Watts
+|`gwatts`
+|`passw0rd`
+
+|===
+
+==== Group: marketing
+
+|===
+|Name|UID |Default password
+
+|Hilary Banks
+|`hbanks`
+|`hilary`
+
+|Mallory Keaton
+|`mkeaton`
+|`mkeaton`
+
+|Ed Norton
+|`enorton`
+|`pwd`
+
+|Michael Scott
+|`mscott`
+|`scott`
+
+|===
+
+== Create your own demo image
+
+In order to create your own OpenLDAP image with custom domain and users, edit link:config.ini[config.ini] and then build a new OpenLDAP image.
+
+* Edit link:config.ini[config.ini].
+* Build image:
+```
+docker build -t my-openldap .
+```
+* Start:
+```
+docker run -it --rm -p 389:1389 -p 636:1636 --name my-openldap my-openldap
+```
+
+=== config.ini
+
+link:config.ini[config.ini] include settings like organization name, domain and users/groups. Modify them as required.
+
+link:config.ini[config.ini] includes also key `useRandomOrganizationAndUsers`. If the values is `yes`, random organization and users are created when building the container.
+
+In order to view generated organization and users, the build process adds _config.ini_ and _settings.txt_ files to the root of container filesystem.
+
+* View _settings.txt_, including base DN, bind DN and filters:
+```
+docker exec my-openldap cat /settings.txt
+```
+* View _generated.ldif_, including users and passwords:
+```
+docker exec my-openldap cat /ldifs/generated.ldif
+```
+* View _config.ini_, used to build the image:
+```
+docker exec my-openldap cat /config.ini
+```
+
+== Certificate
+
+Certificate is created when image is built, using https://github.com/samisalkosuo/certificate-authority[My CA].
+
+SANs in the certificate are:
 
 ```
-docker run -d \
-    -e LDAP_ENDPOINT='ldaps://testmyldap.com:636' \
-    -e LDAP_MANAGER_DN_USERNAME='CN=john-service-user,OU=Administrators,DC=TESTMYLDAP,DC=COM' \
-    -e LDAP_MANAGER_PASSWORD='MasterpasswordNoHack123' \
-    -e LDAP_BIND_DN='{username}@TESTMYLDAP.COM' \
-    -e LDAP_SEARCH_BASE='DC=TESTMYLDAP,DC=COM' \
-    -e LDAP_SEARCH_FILTER='(sAMAccountName={username})' \
-    -e LOG_FORMAT='JSON' \
-    -p 9000:9000 \
-    --name another_ldap_auth \
-    dignajar/another-ldap-auth:latest
+DNS: openldap.<domain in config.ini>
+DNS: localhost
+IP: 127.0.0.1
 ```
 
-**Another LDAP Authentication** now is running on `http://localhost:9000`.
+To add your own SANs, use `--build-arg SANS="san1 san2"` when building the image.
 
-Test it via curl:
-```
-curl -vvv http://localhost:9000 -u diego:mypassword
-```
+To add your own IP SANs, use `--build-arg IPSANS="ip1 ip2"` when building the image.
 
-Output from ALDAP:
-```
-{"date": "2021-05-21 10:06:52", "level": "INFO", "objectName": "Cache", "ip": "192.168.0.10", "referrer": null, "message": "User not found in the cache.", "username": "diego"}
-{"date": "2021-05-21 10:06:52", "level": "INFO", "objectName": "Aldap", "ip": "192.168.0.10", "referrer": null, "message": "Authenticating user.", "username": "diego", "finalUsername": "diego"}
-{"date": "2021-05-21 10:06:53", "level": "INFO", "objectName": "Aldap", "ip": "192.168.0.10", "referrer": null, "message": "Authentication successful.", "username": "diego", "elapsedTime": "0.22335"}
-{"date": "2021-05-21 10:06:53", "level": "INFO", "objectName": "Cache", "ip": "192.168.0.10", "referrer": null, "message": "Adding user to the cache.", "username": "diego"}
-192.168.0.10 - - [21/May/2021 10:06:53] "GET / HTTP/1.1" 200 -
-```
-
-> Remember you can enable self-signed certificate from Flask via the environment variable `LDAP_HTTPS_SUPPORT=="enabled"`.
-
-### Step 2 - Nginx configuration
-Nginx use the module [ngx_http_auth_request_module](http://nginx.org/en/docs/http/ngx_http_auth_request_module.html) to do the subrequest.
-
-The following example shows how to configure Nginx that is running in the same machine as **Another LDAP Authentication**. The backend `/private/` includes the authentication request to `/another_ldap_auth`.
+If you have existing certificates (for example, Let’s Encrypt certs), add them when starting the container:
 
 ```
-location /private/ {
-    auth_request /another_ldap_auth;
-    # ...
-    # Here you private site
-}
-
-location = /another_ldap_auth {
-    internal;
-    proxy_pass_request_body off;
-    proxy_set_header Content-Length "";
-    proxy_pass http://localhost:9000;
-}
+docker run -d -p 389:1389 -p 636:1636 --name openldap-demo  -v $CERT_DIR:/certs2 -e LDAP_TLS_KEY_FILE=/certs2/privkey1.pem -e LDAP_TLS_CERT_FILE=/certs2/cert1.pem -e LDAP_TLS_CA_FILE=/certs2/chain1.pem kazhar/openldap-demo
 ```
 
-Now you can access to your website wich is going to be something like this `http://myserver.com/private/` and Nginx will request you to write the username and password.
+* _CERT_DIR_ is the directory where certificate files are located. 
+* Environment variables tells OpenLDAP the files to use.
+* Make note of certificate files permissions in _CERT_DIR_. It may require relaxed permissions, for example 644.
 
-## Deploy to Kubernetes with Nginx ingress controller
-Get the K8s manifests from the folder `/kubernetes`.
+== Scripts
 
-The manifests for K8s helps to deploy **Another LDAP Authentication** in the namespace `ingress-nginx` and expose the service in the cluster at the following address `https://another-ldap-auth.ingress-nginx`.
+link:scripts/[scripts]-directory includes some scripts that can be used to search LDAP by userid, last name, package files for offline distribution and others.
 
-Please change the environment variables from the manifest and the secret for the bind username.
+== OpenShift
 
-After you have running **Another LDAP Authentication** in your Kubernetes, you can modify the ingress manifest from the application you want to protect.
-
-You can remove the comment `#` and send headers as variables such as `Matching groups`.
+* Install openldap-demo to OpenShift:
 
 ```
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: demo-webserver
-  namespace: demo
-  annotations:
-    nginx.ingress.kubernetes.io/auth-url: https://another-ldap-auth.ingress-nginx
-
-    # nginx.ingress.kubernetes.io/auth-snippet: |
-    #   proxy_set_header Ldap-Allowed-Groups "<SOME GROUP>";
-    #   proxy_set_header Ldap-Allowed-Groups-Conditional "or";
-spec:
-  rules:
-  - host: demo.local
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: demo-webserver
-          servicePort: 80
+sh ocp-openldap-demo.sh install <namespace>
 ```
 
-## Brute Force protection
-Brute force protection is blocking user IP, please read this article to know the limitations about blocking IPs
-- https://owasp.org/www-community/controls/Blocking_Brute_Force_Attacks
+* Uninstall openldap-demo from OpenShift:
 
-## Known limitations
-- Parameters via headers need to be escaped, for example, you can not send parameters such as `$1` or `$test` because Nginx is applying variable expansion.
+```
+sh ocp-openldap-demo.sh uninstall <namespace>
+```
 
-## Breaking changes from v1.x to v2.x
-- `LDAP_REQUIRED_GROUPS` renamed to `LDAP_ALLOWED_USERS`
-- `LDAP_REQUIRED_GROUPS_CONDITIONAL` renamed to `LDAP_ALLOWED_GROUPS_CONDITIONAL`
-- `LDAP_REQUIRED_GROUPS_CASE_SENSITIVE` renamed to `LDAP_ALLOWED_GROUPS_CASE_SENSITIVE`
-- `LDAP_SERVER_DOMAIN` removed and replace by `LDAP_BIND_DN`
+* See link:ocp-openldap-demo.sh/[ocp-openldap-demo.sh] for details.
+* OpenLDAP is accessible within the cluster.
+** For example:
+** `ldap://openldap-demo.<namespace>.svc.cluster.local:389`
+** `ldaps://openldap-demo.<namespace>.svc.cluster.local:636`
