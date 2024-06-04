@@ -29,9 +29,7 @@ spec:
             runAsNonRoot: true
             allowPrivilegeEscalation: true
             runAsUser: 1000
-            capabilities:
-              drop:
-                - ALL
+            
           resources:
             limits:
               cpu: 500m
