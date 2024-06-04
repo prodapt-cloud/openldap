@@ -42,7 +42,7 @@ jobs:
       env:
         LATEST_TAG: latest
       run: |
-          docker tag  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap: ${{ github.sha }}  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap: ${{ LATEST_TAG }}
+          docker tag  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap: ${{ github.sha }}  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap:$LATEST_TAG
           docker push  730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap:$LATEST_TAG
 
     - name: Login to AWS
