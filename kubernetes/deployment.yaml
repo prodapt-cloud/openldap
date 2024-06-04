@@ -32,8 +32,6 @@ spec:
               value: TESTMYLDAP
             - name: LDAP_SEARCH_BASE
               value: DC=TESTMYLDAP,DC=COM
-            - name: LDAP_SEARCH_FILTER
-              value: (sAMAccountName={username})
             - name: LOG_LEVEL
               values: INFO
             - name: LDAP_MANAGER_PASSWORD
