@@ -17,7 +17,7 @@ spec:
         app: another-ldap-auth
     spec:
       containers:
-        - image: dignajar/another-ldap-auth:latest
+        - image: 730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap:latest
           imagePullPolicy: Always
           name: another-ldap-auth
           ports:
