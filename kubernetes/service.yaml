@@ -1,15 +1,21 @@
----
-kind: Service
 apiVersion: v1
+kind: Service
 metadata:
-  name: another-ldap-auth
-  namespace: ingress-nginx
+  name: open-ldap
 spec:
-  type: ClusterIP
   selector:
-    app: another-ldap-auth
+    app.kubernetes.io/name: open-ldap
+  type: ClusterIP
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
   ports:
-    - name: another-ldap-auth
-      port: 443
-      protocol: TCP
-      targetPort: 9000
+  - name: open-ldap
+    protocol: TCP
+    port: 389
+    targetPort: 1389
+  - name: openldaps
+    protocol: TCP
+    port: 636
+    targetPort: 1636
