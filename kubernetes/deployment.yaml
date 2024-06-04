@@ -17,7 +17,7 @@ spec:
         app: open-ldap
     spec:
       containers:
-        - image: 730335644419.dkr.ecr.us-east-1.amazonaws.com/openldap:latest
+        - image: 730335644419.dkr.ecr.us-east-1.amazonaws.com/open-ldap:latest
           imagePullPolicy: Always
           name: open-ldap
           ports:
