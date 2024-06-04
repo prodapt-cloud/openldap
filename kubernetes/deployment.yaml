@@ -33,7 +33,7 @@ spec:
             - name: LDAP_SEARCH_BASE
               value: DC=TESTMYLDAP,DC=COM
             - name: LOG_LEVEL
-              values: INFO
+              value: INFO
             - name: LDAP_MANAGER_PASSWORD
               valueFrom:
                 secretKeyRef:
