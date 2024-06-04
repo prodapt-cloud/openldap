@@ -51,6 +51,12 @@ jobs:
       run: |
            aws eks update-kubeconfig --region us-east-1 --name TMF-INFRA-EKS
 
+    - name: Create Namespace
+      id: create-ns
+      run: |
+         myNamespace="ingress-nginx"
+         kubectl get namespace | grep -q "^$myNamespace " || kubectl create namespace $myNamespace
+
     - name: Deploy the manifest files
       id: deploy-app
       run: |
